@@ -7,6 +7,7 @@ Implementation of publish/subscribe for browser and node.js.
   - Tests
   - Readme
   - Documentation
+  - npm publish
 
 ## License
 
