@@ -1,0 +1,27 @@
+{
+  "name": "h5.pubsub",
+  "version": "0.1.0",
+  "description": "Implementation of publish/subscribe for browser and node.js.",
+  "keywords": ["h5", "pubsub", "publish", "subscribe"],
+  "license": "MIT",
+  "homepage": "https://github.com/morkai/h5.pubsub",
+  "author": {
+    "name": "Łukasz Walukiewicz",
+    "email": "lukasz@walukiewicz.eu",
+    "url": "http://lukasz.walukiewicz.eu/"
+  },
+  "repository": {
+    "type": "git",
+    "url":  "http://github.com/morkai/h5.pubsub.git"
+  },
+  "engine": ["node >=0.8"],
+  "main": "./lib/index",
+  "devDependencies": {
+    "mocha": "1.7.x",
+    "should": "1.2.x",
+    "istanbul": "0.1.x"
+  },
+  "scripts": {
+    "test": "istanbul test --root ./lib ./node_modules/mocha/bin/_mocha"
+  }
+}
