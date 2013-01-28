@@ -202,6 +202,126 @@ describe("Subscription", function()
     });
   });
 
+  describe("on", function()
+  {
+    it("should register the specified message listener function", function()
+    {
+      var calls = 0;
+      var sub = newSub();
+
+      sub.on('message', function() { ++calls; });
+      sub.send('a', null, {});
+
+      calls.should.equal(1);
+    });
+
+    it("should register the specified cancel listener function", function()
+    {
+      var calls = 0;
+      var sub = newSub();
+
+      sub.on('cancel', function() { ++calls; });
+      sub.cancel();
+
+      calls.should.equal(1);
+    });
+
+    it("should register the specified multiple listener functions", function()
+    {
+      var calls = 0;
+      var sub = newSub();
+
+      sub.on('cancel', function() { ++calls; });
+      sub.on('cancel', function() { ++calls; });
+      sub.cancel();
+
+      calls.should.equal(2);
+    });
+
+    it("should throw an Error if the specified event name is invalid", function()
+    {
+      var sub = newSub();
+
+      function test()
+      {
+        sub.on('unknown event', function() {});
+      }
+
+      test.should.throw();
+    });
+
+    it("should do nothing if the subscription was cancelled", function()
+    {
+      var sub = newSub();
+
+      sub.cancel();
+
+      sub.on('unknown event', function() {});
+    });
+  });
+
+  describe("off", function()
+  {
+    it("should remove the specified message listener function", function()
+    {
+      var calls = 0;
+      var sub = newSub();
+
+      function cb() { ++calls; }
+
+      sub.on('message', cb);
+      sub.off('message', cb);
+      sub.send('a', null, {});
+
+      calls.should.equal(0);
+    });
+
+    it("should remove only the specified listener function", function()
+    {
+      var calls1 = 0;
+      var calls2 = 0;
+      var sub = newSub();
+
+      function cb() { ++calls1; }
+
+      sub.on('cancel', function() { ++calls2; });
+      sub.on('cancel', cb);
+      sub.off('cancel', cb);
+      sub.cancel();
+
+      calls1.should.equal(0);
+      calls2.should.equal(1);
+    });
+
+    it("should throw an Error if the specified event name is invalid", function()
+    {
+      var sub = newSub();
+
+      function test()
+      {
+        sub.off('unknown event', function() {});
+      }
+
+      test.should.throw();
+    });
+
+    it("should do nothing if the subscription was cancelled", function()
+    {
+      var sub = newSub();
+
+      sub.cancel();
+
+      sub.off('unknown event', function() {});
+    });
+
+    it("should do nothing if the specified listener function was not registered", function()
+    {
+      var sub = newSub();
+
+      sub.off('message', function() {});
+    });
+  });
+
   describe("send", function()
   {
     it("should not emit a message event if the subscription was cancelled", function()
@@ -236,6 +356,81 @@ describe("Subscription", function()
 
       sub.setFilter(function() { actualArgs = Array.prototype.slice.call(arguments); });
       sub.send(expectedArgs[1], expectedArgs[0], expectedArgs)
+    });
+
+    it("should emit a message event", function()
+    {
+      var calls = 0;
+      var sub = newSub();
+
+      sub.on('message', function() { ++calls; });
+      sub.send('a', null, {});
+
+      calls.should.equal(1);
+    });
+
+    it("should invoke all message listeners", function()
+    {
+      var calls = 0;
+      var sub = newSub();
+
+      sub.on('message', function() { ++calls; });
+      sub.on('message', function() { ++calls; });
+      sub.on('message', function() { ++calls; });
+      sub.send('a', null, {});
+
+      calls.should.equal(3);
+    });
+
+    it("should cancel the subscription if the message limit was reached", function()
+    {
+      var calls = 0;
+      var sub = newSub();
+
+      sub.on('cancel', function() { ++calls; });
+      sub.setLimit(1);
+      sub.send('a', null, {});
+
+      calls.should.equal(1);
+    });
+  });
+
+  describe("cancel", function()
+  {
+    it("should emit a cancel event", function()
+    {
+      var calls = 0;
+      var sub = newSub();
+
+      sub.on('cancel', function() { ++calls; });
+      sub.cancel();
+
+      calls.should.equal(1);
+    });
+
+    it("should invoke all cancel listeners", function()
+    {
+      var calls = 0;
+      var sub = newSub();
+
+      sub.on('cancel', function() { ++calls; });
+      sub.on('cancel', function() { ++calls; });
+      sub.on('cancel', function() { ++calls; });
+      sub.cancel();
+
+      calls.should.equal(3);
+    });
+
+    it("should do nothing if the subscription was already cancelled", function()
+    {
+      var calls = 0;
+      var sub = newSub();
+
+      sub.on('cancel', function() { ++calls; });
+      sub.cancel();
+      sub.cancel();
+
+      calls.should.equal(1);
     });
   });
 });
