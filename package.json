@@ -19,9 +19,11 @@
   "devDependencies": {
     "mocha": "1.7.x",
     "should": "1.2.x",
-    "istanbul": "0.1.x"
+    "istanbul": "0.1.x",
+    "requirejs": "2.1.x"
   },
   "scripts": {
-    "test": "istanbul test --root ./lib ./node_modules/mocha/bin/_mocha"
+    "test": "istanbul test --root ./lib ./node_modules/mocha/bin/_mocha",
+    "amd": "r.js -convert lib/ lib-amd/h5.pubsub/"
   }
 }
