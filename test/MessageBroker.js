@@ -837,6 +837,23 @@ describe("MessageBroker", function()
     });
   });
 
+  describe("countAll", function()
+  {
+    it("should return the same result as count()", function()
+    {
+      var mb = new MessageBroker();
+
+      mb.countAll().should.be.eql(mb.count());
+
+      mb.subscribe('a');
+      mb.countAll().should.be.eql(mb.count());
+
+      mb.subscribe('a');
+      mb.subscribe('b.c');
+      mb.countAll().should.be.eql(mb.count());
+    });
+  });
+
   describe("sandbox", function()
   {
     it("should return an instance of Sandbox bound to the creating MessageBroker", function()
