@@ -26,10 +26,10 @@ describe("Sandbox", function()
       var sandboxHits = 0;
       var brokerHits = 0;
 
-      this.sb.on('new topic', function() { ++sandboxHits; });
-      this.mb.on('new topic', function() { ++brokerHits; });
+      this.sb.subscribe('a', function() { ++sandboxHits; });
+      this.mb.subscribe('a', function() { ++brokerHits; });
       this.sb.destroy();
-      this.mb.subscribe('a');
+      this.mb.publish('a');
 
       sandboxHits.should.be.equal(0);
       brokerHits.should.be.equal(1);
@@ -51,18 +51,6 @@ describe("Sandbox", function()
 
       actualCancelled.should.be.eql(expectedCancelled);
     });
-
-    it("should cancel subscriptions before removing listeners", function()
-    {
-      var cancelHits = 0;
-
-      this.sb.on('cancel', function() { ++cancelHits; });
-      this.sb.subscribe('a').on('cancel', function() { ++cancelHits; });
-
-      this.sb.destroy();
-
-      cancelHits.should.be.equal(2);
-    });
   });
 
   describe("sandbox", function()
@@ -70,14 +58,15 @@ describe("Sandbox", function()
     it("should return an instance of Sandbox bound to the creating Sandbox", function()
     {
       var sb = this.sb.sandbox();
-      var messageHits = 0;
+      var hits = 0;
 
       sb.should.an.instanceOf(Sandbox);
 
-      this.sb.on('message', function() { ++messageHits; });
+      this.sb.publish = function() { ++hits; };
+
       sb.publish('hello', 'world!');
 
-      messageHits.should.equal(1);
+      hits.should.equal(1);
     });
   });
 
@@ -110,7 +99,7 @@ describe("Sandbox", function()
     {
       var hits = 0;
 
-      this.sb.on('new topic', function() { ++hits; });
+      this.mb.on('new topic', function() { ++hits; });
 
       this.sb.subscribe('a');
 
@@ -181,159 +170,6 @@ describe("Sandbox", function()
       this.sb.publish('a');
 
       actual.should.be.eql(['mb']);
-    });
-  });
-
-  describe("count", function()
-  {
-    it("should return a count of subscriptions by topic made by this sandbox", function()
-    {
-      this.mb.subscribe('a');
-      this.mb.subscribe('b');
-      this.sb.subscribe('a');
-      this.sb.subscribe('a');
-      this.sb.subscribe('b');
-      this.sb.subscribe('c.d.e');
-
-      this.sb.count().should.be.eql({
-        'a': 2,
-        'b': 1,
-        'c.d.e': 1
-      });
-    });
-
-    it("should include all subscriptions made by child sandboxes", function()
-    {
-      var sb = this.sb.sandbox();
-
-      this.sb.subscribe('a');
-      this.sb.subscribe('b');
-      sb.subscribe('a');
-      sb.subscribe('a');
-      sb.subscribe('b');
-      sb.subscribe('c.d.e');
-
-      this.sb.count().should.be.eql({
-        'a': 3,
-        'b': 2,
-        'c.d.e': 1
-      });
-    });
-
-    it("should use hasOwnProperty", function()
-    {
-      Object.prototype.fakeSub = {
-        getTopic: function() { return 'fake.topic'; }
-      };
-
-      this.sb.count().should.be.eql({});
-
-      delete Object.prototype.fakeSub;
-    });
-  });
-
-  describe("countAll", function()
-  {
-    it("should return a count of subscriptions by topic made by this sandbox and the parent broker", function()
-    {
-      this.mb.subscribe('a');
-      this.mb.subscribe('b');
-      this.sb.subscribe('a');
-      this.sb.subscribe('a');
-      this.sb.subscribe('b');
-      this.sb.subscribe('c.d.e');
-
-      this.sb.countAll().should.be.eql({
-        'a': 3,
-        'b': 2,
-        'c.d.e': 1
-      });
-    });
-  });
-
-  describe("on", function()
-  {
-    it("should register the specified listeners", function()
-    {
-      var actual = [];
-
-      this.sb.on('message', function() { actual.push('m1'); });
-      this.sb.on('message', function() { actual.push('m2'); });
-
-      this.sb.publish('a');
-
-      actual.should.be.eql(['m1', 'm2']);
-    });
-
-    it("should register the specified listener on the parent broker", function()
-    {
-      var hits = 0;
-
-      this.mb.on('message', function() { ++hits; });
-
-      this.sb.publish('a');
-
-      hits.should.be.equal(1);
-    });
-
-    it("should return self", function()
-    {
-      this.sb.on('message', function() {}).should.be.equal(this.sb);
-    });
-  });
-
-  describe("off", function()
-  {
-    it("should remove only listeners registered in the sandbox", function()
-    {
-      var hits = 0;
-
-      function hit() { ++hits; }
-
-      this.mb.on('message', hit);
-      this.sb.on('message', hit);
-
-      this.sb.off('message', hit);
-      this.sb.publish('a');
-
-      hits.should.be.equal(1);
-    });
-
-    it("should return self if the specified listener was not registered", function()
-    {
-      this.sb.off('message', function() {}).should.be.equal(this.sb);
-    });
-
-    it("should return self if the specified listener was removed", function()
-    {
-      function cb() {}
-
-      this.sb.on('message', cb);
-
-      this.sb.off('message', cb).should.be.equal(this.sb);
-    });
-  });
-
-  describe("emit", function()
-  {
-    it("should delegate to the parent's emit()", function()
-    {
-      var actualArgs = null;
-      var expectedArgs = ['message', 'topic', 'hello world', {}];
-
-      this.mb.emit = function()
-      {
-        actualArgs = Array.prototype.slice.call(arguments);
-      };
-
-      this.sb.emit.apply(this.sb, expectedArgs);
-
-      actualArgs.should.be.eql(expectedArgs);
-    });
-
-    it("should return self", function()
-    {
-      this.sb.emit('message').should.be.equal(this.sb);
     });
   });
 });
