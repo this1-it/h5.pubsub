@@ -1,6 +1,14 @@
-var MessageBroker = require('../lib/MessageBroker');
-var Subscription = require('../lib/Subscription');
-var Sandbox = require('../lib/Sandbox');
+/*jshint maxlen:999*/
+/*global describe:false,it:false*/
+
+'use strict';
+
+require('should');
+
+var LIB_DIR = process.env.LIB_FOR_TESTS_DIR || '../lib';
+var MessageBroker = require(LIB_DIR + '/MessageBroker');
+var Subscription = require(LIB_DIR + '/Subscription');
+var Sandbox = require(LIB_DIR + '/Sandbox');
 
 describe("MessageBroker", function()
 {
@@ -28,7 +36,7 @@ describe("MessageBroker", function()
     mb.on('cancel', function() { ++cancelCalls; });
 
     var sub1 = mb.subscribe('a');
-    var sub2 = mb.subscribe('a');
+    mb.subscribe('a');
 
     sub1.cancel();
 
@@ -272,9 +280,9 @@ describe("MessageBroker", function()
     {
       var mb = new MessageBroker();
 
-      (function() { mb.subscribe(''); }).should.throw();
-      (function() { mb.subscribe('.'); }).should.throw();
-      (function() { mb.subscribe('..'); }).should.throw();
+       mb.subscribe.bind(mb, '').should.throw();
+       mb.subscribe.bind(mb, '.').should.throw();
+       mb.subscribe.bind(mb, '..').should.throw();
     });
   });
 
@@ -366,9 +374,9 @@ describe("MessageBroker", function()
     {
       var mb = new MessageBroker();
 
-      (function() { mb.unsubscribe(''); }).should.throw();
-      (function() { mb.unsubscribe('.'); }).should.throw();
-      (function() { mb.unsubscribe('..'); }).should.throw();
+      mb.unsubscribe.bind(mb, '').should.throw();
+      mb.unsubscribe.bind(mb, '.').should.throw();
+      mb.unsubscribe.bind(mb, '..').should.throw();
     });
   });
 
@@ -442,7 +450,7 @@ describe("MessageBroker", function()
       var expectedMeta = {foo: 'bar'};
       var actualMeta = {};
 
-      mb.subscribe('a', function(_, _, meta)
+      mb.subscribe('a', function(message, topic, meta)
       {
         actualMeta = meta;
       });
@@ -456,7 +464,7 @@ describe("MessageBroker", function()
       var mb = new MessageBroker();
       var actualSubscription = {};
 
-      var expectedSubscription = mb.subscribe('a', function(_, _, _, subscription)
+      var expectedSubscription = mb.subscribe('a', function(message, topic, meta, subscription)
       {
         actualSubscription = subscription;
       });
@@ -629,13 +637,13 @@ describe("MessageBroker", function()
       var mb = new MessageBroker();
       var actualSubs = [];
 
-      var sub1 = mb.subscribe('a', function(_, _, _, sub)
+      var sub1 = mb.subscribe('a', function(message, topic, meta, sub)
       {
         actualSubs.push(sub);
 
         sub1.cancel();
       });
-      var sub2 = mb.subscribe('a', function(_, _, _, sub)
+      var sub2 = mb.subscribe('a', function(message, topic, meta, sub)
       {
         actualSubs.push(sub);
       });
@@ -653,7 +661,7 @@ describe("MessageBroker", function()
       var mb = new MessageBroker();
       var actualSubs = [];
 
-      var sub1 = mb.subscribe('a', function(_, _, _, sub)
+      var sub1 = mb.subscribe('a', function(message, topic, meta, sub)
       {
         actualSubs.push(sub);
 
@@ -661,7 +669,7 @@ describe("MessageBroker", function()
         sub4.cancel();
       });
 
-      function addSub(_, _, _, sub)
+      function addSub(message, topic, meta, sub)
       {
         actualSubs.push(sub);
       }
@@ -682,20 +690,20 @@ describe("MessageBroker", function()
     {
       var mb = new MessageBroker();
 
-      (function() { mb.publish(''); }).should.throw();
-      (function() { mb.publish('.'); }).should.throw();
-      (function() { mb.publish('..'); }).should.throw();
+      mb.publish.bind(mb, '').should.throw();
+      mb.publish.bind(mb, '.').should.throw();
+      mb.publish.bind(mb, '..').should.throw();
     });
 
     it("should set the meta parameter to an empty object if it was not specified", function()
     {
       var mb = new MessageBroker();
 
-      mb.on('message', function(_, _, meta)
+      mb.on('message', function(message, topic, meta)
       {
         meta.should.eql({});
       });
-      mb.subscribe('a', function(_, _, meta)
+      mb.subscribe('a', function(message, topic, meta)
       {
         meta.should.eql({});
       });
@@ -707,7 +715,7 @@ describe("MessageBroker", function()
   {
     function subscribeToTopics(mb, topicToCountMap)
     {
-      for (var topic in topicToCountMap)
+      Object.keys(topicToCountMap).forEach(function(topic)
       {
         var count = topicToCountMap[topic];
 
@@ -715,7 +723,7 @@ describe("MessageBroker", function()
         {
           mb.subscribe(topic);
         }
-      }
+      });
     }
 
     it("should return an empty object if there are no subscriptions", function()
@@ -862,7 +870,7 @@ describe("MessageBroker", function()
       var expectedSubs = [];
       var actualSubs = [];
 
-      mb.on('cancel', function(sub) { actualSubs.push(sub) });
+      mb.on('cancel', function(sub) { actualSubs.push(sub); });
 
       expectedSubs.push(
         mb.subscribe('a'),
@@ -932,10 +940,7 @@ describe("MessageBroker", function()
     {
       var mb = new MessageBroker();
 
-      (function()
-      {
-        mb.on('hopefully an unknown event', function() {});
-      }).should.throw();
+      mb.on.bind(mb, 'hopefully an unknown event', function() {}).should.throw();
     });
 
     it("should return self", function()
@@ -1001,10 +1006,7 @@ describe("MessageBroker", function()
     {
       var mb = new MessageBroker();
 
-      (function()
-      {
-        mb.off('hopefully an unknown event', function() {});
-      }).should.throw();
+      mb.off.bind(mb, 'hopefully an unknown event', function() {}).should.throw();
     });
 
     it("should return self", function()
@@ -1106,10 +1108,7 @@ describe("MessageBroker", function()
     {
       var mb = new MessageBroker();
 
-      (function()
-      {
-        mb.emit('hopefully an unknown event');
-      }).should.throw();
+      mb.emit.bind(mb, 'hopefully an unknown event').should.throw();
     });
 
     it("should return self", function()

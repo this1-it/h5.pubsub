@@ -1,6 +1,14 @@
-var MessageBroker = require('../lib/MessageBroker');
-var Sandbox = require('../lib/Sandbox');
-var Subscription = require('../lib/Subscription');
+/*jshint maxlen:999*/
+/*global describe:false,it:false,beforeEach:false,afterEach:false*/
+
+'use strict';
+
+require('should');
+
+var LIB_DIR = process.env.LIB_FOR_TESTS_DIR || '../lib';
+var MessageBroker = require(LIB_DIR + '/MessageBroker');
+var Sandbox = require(LIB_DIR + '/Sandbox');
+var Subscription = require(LIB_DIR + '/Subscription');
 
 describe("Sandbox", function()
 {

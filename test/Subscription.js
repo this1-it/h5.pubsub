@@ -1,5 +1,11 @@
+/*jshint maxlen:999*/
+/*global describe:false,it:false,afterEach:false*/
+
+'use strict';
+
+var LIB_DIR = process.env.LIB_FOR_TESTS_DIR || '../lib';
 var should = require('should');
-var Subscription = require('../lib/Subscription');
+var Subscription = require(LIB_DIR + '/Subscription');
 
 describe("Subscription", function()
 {
@@ -19,7 +25,7 @@ describe("Subscription", function()
   {
     it("should throw an Error", function()
     {
-      (function() { Subscription.compileFilter({}); }).should.throw();
+      Subscription.compileFilter.bind(null, {}).should.throw();
     });
   });
 
@@ -42,7 +48,7 @@ describe("Subscription", function()
 
     it("should return a source of the filter function", function()
     {
-      var filter = function(message, topic, meta, sub)
+      var filter = function(message)
       {
         return typeof message === 'string';
       };
@@ -134,7 +140,9 @@ describe("Subscription", function()
     {
       Subscription.compileFilter = function() { return 'NOT_A_FUNCTION'; };
 
-      (function() { newSub().setFilter({a: 1}); }).should.throw();
+      var sub = newSub();
+
+      sub.setFilter.bind(sub, {a: 1}).should.throw();
     });
 
     it("should return self", function()
@@ -171,8 +179,10 @@ describe("Subscription", function()
 
     it("should throw an Error if the specified limit is less than 1", function()
     {
-      (function() { newSub().setLimit(0); }).should.throw();
-      (function() { newSub().setLimit(-10); }).should.throw();
+      var sub = newSub();
+
+      sub.setLimit.bind(sub, 0).should.throw();
+      sub.setLimit.bind(sub, -10).should.throw();
     });
 
     it("should return self", function()
@@ -355,7 +365,7 @@ describe("Subscription", function()
       var actualArgs = [];
 
       sub.setFilter(function() { actualArgs = Array.prototype.slice.call(arguments); });
-      sub.send(expectedArgs[1], expectedArgs[0], expectedArgs)
+      sub.send(expectedArgs[1], expectedArgs[0], expectedArgs);
     });
 
     it("should emit a message event", function()
