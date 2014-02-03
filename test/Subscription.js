@@ -286,7 +286,7 @@ describe("Subscription", function()
       calls.should.equal(0);
     });
 
-    it("should remove only the specified listener function", function()
+    it("should remove only the specified listener function of 2", function()
     {
       var calls1 = 0;
       var calls2 = 0;
@@ -301,6 +301,26 @@ describe("Subscription", function()
 
       calls1.should.equal(0);
       calls2.should.equal(1);
+    });
+
+    it("should remove only the specified listener function of 3", function()
+    {
+      var calls1 = 0;
+      var calls2 = 0;
+      var calls3 = 0;
+      var sub = newSub();
+
+      function cb() { ++calls1; }
+
+      sub.on('cancel', function() { ++calls2; });
+      sub.on('cancel', function() { ++calls3; });
+      sub.on('cancel', cb);
+      sub.off('cancel', cb);
+      sub.cancel();
+
+      calls1.should.equal(0);
+      calls2.should.equal(1);
+      calls3.should.equal(1);
     });
 
     it("should throw an Error if the specified event name is invalid", function()
@@ -324,9 +344,20 @@ describe("Subscription", function()
       sub.off('unknown event', function() {});
     });
 
-    it("should do nothing if the specified listener function was not registered", function()
+    it("should do nothing if the no listeners were registered", function()
     {
       var sub = newSub();
+
+      sub.off('message', function() {});
+    });
+
+    it("should do nothing if the the specified listener was not registered", function()
+    {
+      var sub = newSub();
+
+      sub.on('message', function() {});
+      sub.on('message', function() {});
+      sub.on('message', function() {});
 
       sub.off('message', function() {});
     });
