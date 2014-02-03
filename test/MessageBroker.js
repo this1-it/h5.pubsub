@@ -1,4 +1,4 @@
-/*jshint maxlen:999*/
+/*jshint maxlen:999,maxstatements:999*/
 /*global describe:false,it:false*/
 
 'use strict';
