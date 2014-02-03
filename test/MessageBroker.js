@@ -26,6 +26,7 @@ describe("MessageBroker", function()
     sub2.cancel();
 
     emptyTopicCalls.should.equal(1);
+    mb.count().should.eql({});
   });
 
   it("should emit a cancel event if any added subscription was cancelled", function()
@@ -41,6 +42,7 @@ describe("MessageBroker", function()
     sub1.cancel();
 
     cancelCalls.should.equal(1);
+    mb.count().should.eql({'a': 1});
   });
 
   it("should pass the cancelled subscription as a first argument to the cancel event", function()
@@ -58,6 +60,7 @@ describe("MessageBroker", function()
     expectedSubscription.cancel();
 
     actualSubscription.should.equal(expectedSubscription);
+    mb.count().should.eql({});
   });
 
   describe("subscribe", function()
@@ -72,6 +75,7 @@ describe("MessageBroker", function()
       }
 
       subscribe.should.not.throw();
+      mb.count().should.eql({'a': 1});
     });
 
     it("should add a subscription to the specified topic", function()
@@ -84,6 +88,7 @@ describe("MessageBroker", function()
       mb.publish('a');
 
       cbCalls.should.equal(1);
+      mb.count().should.eql({'a': 1});
     });
 
     it("should add a subscription to the specified level 2 topic", function()
@@ -96,6 +101,7 @@ describe("MessageBroker", function()
       mb.publish('a.b');
 
       cbCalls.should.equal(1);
+      mb.count().should.eql({'a.b': 1});
     });
 
     it("should add a subscription to the specified multi-level topic", function()
@@ -108,6 +114,7 @@ describe("MessageBroker", function()
       mb.publish('a.b.c.d.e.f');
 
       cbCalls.should.equal(1);
+      mb.count().should.eql({'a.b.c.d.e.f': 1});
     });
 
     it("should return an added subscription", function()
@@ -117,6 +124,7 @@ describe("MessageBroker", function()
       var sub = mb.subscribe('a');
 
       sub.should.an.instanceOf(Subscription);
+      mb.count().should.eql({'a': 1});
     });
 
     it("should emit a new topic event if it is the first subscription to the topic", function()
@@ -130,6 +138,7 @@ describe("MessageBroker", function()
       mb.subscribe('a');
 
       newTopicCalls.should.equal(1);
+      mb.count().should.eql({'a': 2});
     });
 
     it("should emit a subscribe event for each new subscription", function()
@@ -143,6 +152,7 @@ describe("MessageBroker", function()
       mb.subscribe('a');
 
       subscribeCalls.should.equal(2);
+      mb.count().should.eql({'a': 2});
     });
 
     it("should add subscriptions from within callbacks", function()
@@ -158,6 +168,7 @@ describe("MessageBroker", function()
       mb.publish('b');
 
       cbCalls.should.equal(1);
+      mb.count().should.eql({'a': 1, 'b': 1});
     });
 
     it("should assign different IDs to subscriptions of the same topic", function()
@@ -168,6 +179,7 @@ describe("MessageBroker", function()
       var sub2Id = mb.subscribe('a').getId();
 
       sub1Id.should.not.equal(sub2Id);
+      mb.count().should.eql({'a': 2});
     });
 
     it("should assign different IDs to subscriptions of different topics", function()
@@ -178,6 +190,7 @@ describe("MessageBroker", function()
       var sub2Id = mb.subscribe('b').getId();
 
       sub1Id.should.not.equal(sub2Id);
+      mb.count().should.eql({'a': 1, 'b': 1});
     });
 
     it("should allow ANY as the only topic part", function()
@@ -191,6 +204,7 @@ describe("MessageBroker", function()
       mb.publish('a.b');
 
       cbCalls.should.equal(2);
+      mb.count().should.eql({'*': 1});
     });
 
     it("should allow ANY as the first topic part", function()
@@ -205,6 +219,7 @@ describe("MessageBroker", function()
       mb.publish('a.a');
 
       cbCalls.should.equal(2);
+      mb.count().should.eql({'*.b': 1});
     });
 
     it("should allow ANY as the last topic part", function()
@@ -219,6 +234,7 @@ describe("MessageBroker", function()
       mb.publish('a.b.c');
 
       cbCalls.should.equal(2);
+      mb.count().should.eql({'a.*': 1});
     });
 
     it("should allow ANY as the middle topic part", function()
@@ -233,6 +249,7 @@ describe("MessageBroker", function()
       mb.publish('a.b');
 
       cbCalls.should.equal(2);
+      mb.count().should.eql({'a.*.c': 1});
     });
 
     it("should allow multiple ANY topic parts", function()
@@ -247,6 +264,7 @@ describe("MessageBroker", function()
       mb.publish('a.b.c.d.e');
 
       cbCalls.should.equal(2);
+      mb.count().should.eql({'*.b.*.c.*': 1});
     });
 
     it("should allow ALL as the only topic part", function()
@@ -260,6 +278,7 @@ describe("MessageBroker", function()
       mb.publish('a.b.c');
 
       cbCalls.should.equal(3);
+      mb.count().should.eql({'**': 1});
     });
 
     it("should allow ALL as the last topic part", function()
@@ -274,15 +293,17 @@ describe("MessageBroker", function()
       mb.publish('a.b.c.d');
 
       cbCalls.should.equal(3);
+      mb.count().should.eql({'a.b.**': 1});
     });
 
     it("should throw an Error if the specified topic is invalid", function()
     {
       var mb = new MessageBroker();
 
-       mb.subscribe.bind(mb, '').should.throw();
-       mb.subscribe.bind(mb, '.').should.throw();
-       mb.subscribe.bind(mb, '..').should.throw();
+      mb.subscribe.bind(mb, '').should.throw();
+      mb.subscribe.bind(mb, '.').should.throw();
+      mb.subscribe.bind(mb, '..').should.throw();
+      mb.count().should.eql({});
     });
   });
 
@@ -293,12 +314,13 @@ describe("MessageBroker", function()
       var mb = new MessageBroker();
 
       mb.unsubscribe('a');
+      mb.count().should.eql({});
     });
 
     it("should remove the single subscription matching the specified topic", function()
     {
       var mb = new MessageBroker();
-      var expectedSub = {};
+      var expectedSub;
       var actualSub = {};
 
       mb.on('cancel', function(sub) { actualSub = sub; });
@@ -307,6 +329,7 @@ describe("MessageBroker", function()
       mb.unsubscribe('a');
 
       actualSub.should.equal(expectedSub);
+      mb.count().should.eql({});
     });
 
     it("should remove all subscriptions matching the specified topic", function()
@@ -325,6 +348,7 @@ describe("MessageBroker", function()
       mb.unsubscribe('a');
 
       actualSubs.should.eql(expectedSubs);
+      mb.count().should.eql({});
     });
 
     it("should only remove subscriptions matching the specified topic", function()
@@ -342,6 +366,7 @@ describe("MessageBroker", function()
       mb.unsubscribe('a');
 
       actualSubs.should.eql(expectedSubs);
+      mb.count().should.eql({'b': 1, 'c': 1});
     });
 
     it("should remove subscriptions with multi-level topics", function()
@@ -361,6 +386,7 @@ describe("MessageBroker", function()
       mb.unsubscribe('a.b.c');
 
       actualSubs.should.eql(expectedSubs);
+      mb.count().should.eql({'b.c': 1, 'c.d.e': 1});
     });
 
     it("should return self", function()
@@ -368,6 +394,7 @@ describe("MessageBroker", function()
       var mb = new MessageBroker();
 
       mb.unsubscribe('a').should.equal(mb);
+      mb.count().should.eql({});
     });
 
     it("should throw an Error if the specified topic is invalid", function()
@@ -377,6 +404,7 @@ describe("MessageBroker", function()
       mb.unsubscribe.bind(mb, '').should.throw();
       mb.unsubscribe.bind(mb, '.').should.throw();
       mb.unsubscribe.bind(mb, '..').should.throw();
+      mb.count().should.eql({});
     });
   });
 
@@ -387,6 +415,7 @@ describe("MessageBroker", function()
       var mb = new MessageBroker();
 
       mb.publish('a').should.equal(mb);
+      mb.count().should.eql({});
     });
 
     it("should invoke a callback for a single subscription matching the specified topic", function()
@@ -398,6 +427,7 @@ describe("MessageBroker", function()
       mb.publish('a');
 
       cbCalls.should.equal(1);
+      mb.count().should.eql({'a': 1});
     });
 
     it("should invoke callbacks for multiple subscriptions matching the specified topic", function()
@@ -412,6 +442,7 @@ describe("MessageBroker", function()
       mb.publish('a');
 
       cbCalls.should.equal(3);
+      mb.count().should.eql({'a': 3});
     });
 
     it("should pass the specified message to a callback as the first argument", function()
@@ -427,6 +458,7 @@ describe("MessageBroker", function()
       mb.publish('a', expectedMessage);
 
       actualMessage.should.equal(expectedMessage);
+      mb.count().should.eql({'a': 1});
     });
 
     it("should pass the specified topic to a callback as the second argument", function()
@@ -442,9 +474,10 @@ describe("MessageBroker", function()
       mb.publish(expectedTopic);
 
       actualTopic.should.equal(expectedTopic);
+      mb.count().should.eql({'foo': 1});
     });
 
-    it("should pass a subscription to a callback as the fourth argument", function()
+    it("should pass a meta object to a callback as the third argument", function()
     {
       var mb = new MessageBroker();
       var expectedMeta = {foo: 'bar'};
@@ -457,6 +490,7 @@ describe("MessageBroker", function()
       mb.publish('a', null, expectedMeta);
 
       actualMeta.should.equal(expectedMeta);
+      mb.count().should.eql({'a': 1});
     });
 
     it("should pass a subscription to a callback as the fourth argument", function()
@@ -471,6 +505,7 @@ describe("MessageBroker", function()
       mb.publish('a');
 
       actualSubscription.should.equal(expectedSubscription);
+      mb.count().should.eql({'a': 1});
     });
 
     it("should emit a message event with the same arguments", function()
@@ -494,6 +529,7 @@ describe("MessageBroker", function()
       actualTopic.should.equal(expectedTopic);
       actualMessage.should.equal(expectedMessage);
       actualMeta.should.equal(expectedMeta);
+      mb.count().should.eql({});
     });
 
     it("should emit a message event for each published message", function()
@@ -508,6 +544,7 @@ describe("MessageBroker", function()
       mb.publish('c');
 
       messageCalls.should.equal(4);
+      mb.count().should.eql({});
     });
     
     it("should invoke a callback matching the subscription's filter", function()
@@ -527,6 +564,7 @@ describe("MessageBroker", function()
       mb.publish('a', {hello: 'world'});
 
       cbCalls.should.equal(1);
+      mb.count().should.eql({'a': 1});
     });
 
     it("should not invoke a callback not matching the subscription's filter", function()
@@ -546,6 +584,7 @@ describe("MessageBroker", function()
       mb.publish('a', {hello: 'world'});
 
       cbCalls.should.equal(0);
+      mb.count().should.eql({'a': 1});
     });
 
     it("should invoke a callback only the limited amount of times", function()
@@ -562,6 +601,7 @@ describe("MessageBroker", function()
       mb.publish('a');
 
       cbCalls.should.equal(2);
+      mb.count().should.eql({});
     });
 
     it("should emit a cancel event after a subscription reached its message limit", function()
@@ -574,6 +614,7 @@ describe("MessageBroker", function()
       mb.publish('a');
 
       cancelCalls.should.equal(1);
+      mb.count().should.eql({});
     });
 
     it("should emit a cancel event with the cancelled subscription as the first argument after it has reached its message limit", function()
@@ -591,6 +632,7 @@ describe("MessageBroker", function()
       mb.publish('a');
 
       actualSubscription.should.equal(expectedSubscription);
+      mb.count().should.eql({});
     });
 
     it("should immediately publish from within a callback", function()
@@ -612,6 +654,7 @@ describe("MessageBroker", function()
       mb.publish('a');
 
       actualCalls.should.eql(expectedCalls);
+      mb.count().should.eql({'inner': 1, 'a': 1});
     });
 
     it("should not invoke callback of the only subscription cancelled during sending of a message", function()
@@ -630,6 +673,7 @@ describe("MessageBroker", function()
       mb.publish('a');
 
       calls.should.equal(1);
+      mb.count().should.eql({});
     });
 
     it("should invoke callback of the only remaining subscription not cancelled during sending of a message", function()
@@ -654,6 +698,7 @@ describe("MessageBroker", function()
       mb.publish('a');
 
       actualSubs.should.eql(expectedSubs);
+      mb.count().should.eql({'a': 1});
     });
 
     it("should not invoke callbacks of multiple subscriptions cancelled during sending of a message", function()
@@ -684,6 +729,38 @@ describe("MessageBroker", function()
       mb.publish('a');
 
       actualSubs.should.eql(expectedSubs);
+      mb.count().should.eql({'a': 3});
+    });
+
+    it("should not invoke callbacks of multiple subscriptions cancelled during sending of a message in reverse order", function()
+    {
+      var mb = new MessageBroker();
+      var actualSubs = [];
+
+      var sub1 = mb.subscribe('a', function(message, topic, meta, sub)
+      {
+        actualSubs.push(sub);
+
+        sub4.cancel();
+        sub2.cancel();
+      });
+
+      function addSub(message, topic, meta, sub)
+      {
+        actualSubs.push(sub);
+      }
+
+      var sub2 = mb.subscribe('a', addSub);
+      var sub3 = mb.subscribe('a', addSub);
+      var sub4 = mb.subscribe('a', addSub);
+      var sub5 = mb.subscribe('a', addSub);
+
+      var expectedSubs = [sub1, sub3, sub5];
+
+      mb.publish('a');
+
+      actualSubs.should.eql(expectedSubs);
+      mb.count().should.eql({'a': 3});
     });
 
     it("should throw an Error if the specified topic is invalid", function()
@@ -693,6 +770,7 @@ describe("MessageBroker", function()
       mb.publish.bind(mb, '').should.throw();
       mb.publish.bind(mb, '.').should.throw();
       mb.publish.bind(mb, '..').should.throw();
+      mb.count().should.eql({});
     });
 
     it("should set the meta parameter to an empty object if it was not specified", function()
@@ -708,6 +786,7 @@ describe("MessageBroker", function()
         meta.should.eql({});
       });
       mb.publish('a');
+      mb.count().should.eql({'a': 1});
     });
   });
 
@@ -881,6 +960,7 @@ describe("MessageBroker", function()
       mb.destroy();
 
       actualSubs.should.eql(expectedSubs);
+      mb.count().should.eql({});
     });
 
     it("should emit empty topic for each distinct subscribed topic", function()
@@ -898,6 +978,7 @@ describe("MessageBroker", function()
       mb.destroy();
 
       expectedTopics.should.eql(actualTopics);
+      mb.count().should.eql({});
     });
   });
 
@@ -1116,6 +1197,95 @@ describe("MessageBroker", function()
       var mb = new MessageBroker();
 
       mb.emit('message').should.equal(mb);
+    });
+  });
+
+  describe("cancellation", function()
+  {
+    it("should clean chosen subscriptions", function()
+    {
+      var mb = new MessageBroker();
+      var calls = [];
+      var s1, s2, s3, s4;
+
+      s1 = mb.subscribe('a', function()
+      {
+        calls.push(1);
+        s2.cancel();
+
+        if (!s4)
+        {
+          s4 = mb.subscribe('a', function() { calls.push(4); });
+        }
+      });
+      s2 = mb.subscribe('a', function() { calls.push(2); });
+      s3 = mb.subscribe('a', function()
+      {
+        calls.push(3);
+        s1.cancel();
+        s3.cancel();
+      });
+
+      mb.publish('a');
+      mb.publish('a');
+      mb.publish('a');
+
+      calls.should.be.eql([1, 3, 4, 4]);
+      mb.count().should.be.eql({a: 1});
+    });
+
+    it("should clean all subscriptions", function()
+    {
+      var mb = new MessageBroker();
+      var calls = [];
+      var s1, s2, s3, s4;
+
+      s1 = mb.subscribe('a', function()
+      {
+        calls.push(1);
+        s2.cancel();
+
+        if (!s4)
+        {
+          s4 = mb.subscribe('a', function() { calls.push(4); });
+        }
+      });
+      s2 = mb.subscribe('a', function() { calls.push(2); });
+      s3 = mb.subscribe('a', function()
+      {
+        calls.push(3);
+        s4.cancel();
+        s1.cancel();
+        s3.cancel();
+      });
+
+      mb.publish('a');
+      mb.publish('a');
+      mb.publish('a');
+
+      calls.should.be.eql([1, 3]);
+      mb.count().should.be.eql({});
+    });
+
+    it("should clean the single cancelled subscription", function()
+    {
+      var mb = new MessageBroker();
+      var calls = [];
+      var s1, s2;
+
+      s1 = mb.subscribe('a', function()
+      {
+        calls.push(1);
+        s1.cancel();
+      });
+      s2 = mb.subscribe('a', function() { calls.push(2); });
+
+      mb.publish('a');
+      mb.publish('a');
+      mb.publish('a');
+
+      calls.should.be.eql([1, 2, 2, 2]);
+      mb.count().should.be.eql({a: 1});
     });
   });
 });
