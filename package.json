@@ -4,16 +4,16 @@
   "description": "Implementation of publish/subscribe for browser and node.js.",
   "keywords": ["h5", "pubsub", "publish", "subscribe"],
   "license": "MIT",
-  "homepage": "https://github.com/morkai/h5.pubsub",
+  "homepage": "https://github.com/tisone/h5.pubsub",
   "author": {
-    "name": "Łukasz Walukiewicz",
-    "email": "lukasz@walukiewicz.eu",
-    "url": "http://lukasz.walukiewicz.eu/"
+    "name": "tisone",
+    "email": "tisone@this1.it",
+    "url": "http://this1.it/"
   },
-  "bugs": "https://github.com/morkai/h5.pubsub/issues",
+  "bugs": "https://github.com/tisone/h5.pubsub/issues",
   "repository": {
     "type": "git",
-    "url":  "http://github.com/morkai/h5.pubsub.git"
+    "url":  "http://github.com/tisone/h5.pubsub.git"
   },
   "engine": ["node >=0.8"],
   "main": "./lib/index",

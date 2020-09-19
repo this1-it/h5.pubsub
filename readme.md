@@ -2,7 +2,6 @@
 
 Implementation of publish/subscribe for node.js and the browser.
 
-[![Build Status](https://travis-ci.org/morkai/h5.pubsub.png?branch=master)](https://travis-ci.org/morkai/h5.pubsub)
 
 ## TODO
 
